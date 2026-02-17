@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PLC AI Studio - Generador PLC con Google Gemini</title>
+    <meta name="description" content="Genera código PLC profesional usando Google Gemini, 100% client-side. Compatible con Siemens, Allen-Bradley, Mitsubishi, Omron y más." />
+    <link rel="icon" href="/plc.gif" />
+    
+    <!-- CSS Architecture -->
+    <style>
+      /* --- VARIABLES & THEME --- */
+      :root {
+        --font-primary: 'Inter', 'Segoe UI', Arial, sans-serif;
+        --font-mono: 'Fira Mono', 'Consolas', 'Courier New', monospace;
+        
+        /* Colors */
+        --bg-body-start: #f6f8fa;
+        --bg-body-end: #e0e7ef;
+        --bg-white: #ffffff;
+        --bg-panel: #fcfdff;
+        
+        --color-primary: #2563eb;
+        --color-primary-hover: #1746a2;
+        --color-primary-light: #3b82f6;
+        --color-text-main: #222b3a;
+        --color-text-muted: #64748b;
+        --color-border: #e5e7eb;
+        --color-border-input: #cbd5e1;
+        --color-success-start: #059669;
+        --color-success-end: #10b981;
+        --color-warning-bg: #fff3cd;
+        --color-warning-border: #ffe082;
+        --color-warning-text: #b45309;
+
+        /* Shadows */
+        --shadow-xs: 0 1px 0 #3b82f611;
+        --shadow-sm: 0 2px 8px #3b82f633;
+        --shadow-header: 0 2px 12px #1e293b0a;
+        --shadow-panel: 0 8px 32px #1e293b18;
+      }
+
+      /* --- GLOBAL RESET & TYPOGRAPHY --- */
+      * { box-sizing: border-box; }
+      
+      html, body {
+        font-family: var(--font-primary);
+        color: var(--color-text-main);
+        font-size: 16px;
+        margin: 0;
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background: linear-gradient(120deg, var(--bg-body-start) 70%, var(--bg-body-end) 100%);
+        min-height: 100vh;
+        letter-spacing: 0.01em;
+      }
+
+      a { text-decoration: none; color: inherit; }
+
+      /* --- LAYOUT UTILITIES --- */
+      .container {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 0 2rem;
+      }
+
+      /* --- HEADER --- */
+      .main-header {
+        background: var(--bg-white);
+        border-bottom: 1.5px solid var(--color-border);
+        box-shadow: var(--shadow-header);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 0.5rem 0;
+      }
+      .header-content {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        min-height: 72px;
+        animation: fadeInDown 0.7s cubic-bezier(.4,0,.2,1);
+      }
+      .logo-plc {
+        width: 56px;
+        height: 56px;
+        border-radius: 1rem;
+        border: 2px solid var(--color-primary-light);
+        background: var(--bg-white);
+        object-fit: contain;
+        box-shadow: var(--shadow-sm);
+        transition: box-shadow 0.2s, border-color 0.2s, transform 0.18s;
+      }
+      .logo-plc:hover {
+        box-shadow: 0 4px 16px #3b82f655;
+        border-color: var(--color-primary);
+        transform: scale(1.07) rotate(-3deg);
+      }
+      .brand-title {
+        font-size: 2.1rem;
+        font-weight: 900;
+        color: var(--color-primary);
+        margin: 0;
+        letter-spacing: 0.04em;
+        text-shadow: 0 1px 0 #3b82f622;
+        animation: fadeInLeft 0.8s cubic-bezier(.4,0,.2,1);
+      }
+      .brand-desc {
+        color: var(--color-text-muted);
+        font-size: 1.08rem;
+        margin: 0.2rem 0 0 0;
+        font-weight: 400;
+        animation: fadeInLeft 1s cubic-bezier(.4,0,.2,1);
+      }
+
+      /* --- INFO SECTION --- */
+      .info-section {
+        background: #f1f5f9;
+        border-top: 1.5px solid var(--color-border);
+        padding: 2.5rem 0 1.5rem 0;
+      }
+      .warning-box {
+        background: var(--color-warning-bg);
+        border: 1.5px solid var(--color-warning-border);
+        color: var(--color-warning-text);
+        padding: 1rem 1.2rem;
+        border-radius: 0.7rem;
+        margin-bottom: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        box-shadow: 0 1px 8px #b4530922;
+      }
+      .link-primary {
+        color: var(--color-primary);
+        text-decoration: underline;
+      }
+      .list-steps {
+        margin: 0 0 0.7rem 1.2rem;
+        padding: 0;
+        list-style: none;
+      }
+      .list-steps li {
+        margin-bottom: 0.3rem;
+        line-height: 1.6;
+      }
+      .list-steps ul { margin: 0.2rem 0 0 1.2rem; list-style: none;}
+
+      /* --- MAIN GRID --- */
+      main.container {
+        margin-top: 2.5rem;
+        display: flex;
+        gap: 2.5rem;
+        align-items: flex-start;
+      }
+
+      /* --- CONFIG PANEL --- */
+      .config-panel {
+        background: linear-gradient(120deg,#f8fafc 80%,#e0e7ef 100%);
+        border-radius: 1.25rem;
+        padding: 2.7rem 2.5rem 2.2rem 2.5rem;
+        min-width: 380px;
+        max-width: 520px;
+        flex: 1.2 1 380px;
+        box-shadow: var(--shadow-panel), 0 2px 0 var(--color-primary-light);
+        border: 1.5px solid var(--color-border);
+        position: relative;
+        margin-bottom: 2rem;
+        transition: box-shadow 0.25s, border-color 0.25s, transform 0.18s;
+        animation: fadeIn 0.9s cubic-bezier(.4,0,.2,1);
+        display: flex;
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+      .config-panel:hover {
+        box-shadow: 0 16px 48px #1e293b33, 0 2px 0 var(--color-primary);
+        border-color: var(--color-primary);
+        transform: translateY(-2px) scale(1.012);
+      }
+      
+      .panel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        margin-bottom: 2.1rem;
+      }
+      .accent-bar {
+        width: 7px;
+        height: 2.3rem;
+        background: linear-gradient(180deg, var(--color-primary) 60%, var(--color-primary-light) 100%);
+        border-radius: 8px;
+      }
+      .panel-title {
+        font-size: 1.32rem;
+        color: var(--color-primary-hover);
+        font-weight: 900;
+        margin: 0;
+        letter-spacing: 0.03em;
+      }
+
+      /* FORM ELEMENTS */
+      .config-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+      }
+      .form-row {
+        display: flex;
+        gap: 1.2rem;
+        width: 100%;
+      }
+      .form-group {
+        position: relative;
+        flex: 1;
+      }
+      .form-group.large { flex: 2; }
+      .form-group.small { flex: 1; min-width: 120px; }
+      
+      label {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--color-text-main);
+        margin-bottom: 0.3rem;
+        display: block;
+        margin-left: 1.1rem; /* Aligned visually */
+      }
+      
+      input, textarea, select {
+        width: 100%;
+        border: 1.5px solid var(--color-border-input);
+        border-radius: 0.7rem;
+        padding: 0.85rem 1rem 0.85rem 1.1rem;
+        font-size: 1rem;
+        background: #f8fafc;
+        color: var(--color-text-main);
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s, background 0.18s;
+        box-shadow: var(--shadow-xs);
+        font-family: var(--font-primary);
+      }
+      
+      input:focus, textarea:focus, select:focus {
+        border-color: var(--color-primary);
+        box-shadow: 0 0 0 3px #2563eb22;
+        background: #e0e7ef;
+      }
+
+      /* BUTTONS */
+      .btn-primary {
+        background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary));
+        color: var(--bg-white);
+        border: none;
+        border-radius: 0.75rem;
+        padding: 0.9rem 2rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.2s, box-shadow 0.2s;
+        font-size: 1.1rem;
+        box-shadow: var(--shadow-sm);
+        margin-top: 0.7rem;
+        letter-spacing: 0.04em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        align-self: flex-end;
+        min-width: 180px;
+      }
+      .btn-primary:hover {
+        background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+        box-shadow: 0 4px 16px #3b82f644;
+      }
+      
+      .btn-download {
+        background: linear-gradient(90deg, var(--color-success-start) 80%, var(--color-success-end) 100%);
+        color: var(--bg-white);
+        font-weight: 700;
+        font-size: 1.02rem;
+        border: none;
+        border-radius: 0.7rem;
+        padding: 0.7rem 1.2rem;
+        box-shadow: 0 2px 8px #05966933;
+        cursor: pointer;
+        transition: background 0.18s, box-shadow 0.18s, transform 0.12s, filter 0.18s;
+        display: none; /* Hidden by default */
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .btn-download:hover {
+        background: linear-gradient(90deg, #047857 80%, #059669 100%);
+        transform: translateY(-2px) scale(1.04);
+        filter: brightness(1.08);
+      }
+      .btn-download:active {
+        transform: scale(0.98);
+        filter: brightness(0.97);
+      }
+
+      /* --- HELPER & TIPS --- */
+      .help-text {
+        color: var(--color-text-muted);
+        font-size: 0.98rem;
+        margin-bottom: 0.2rem;
+        margin-top: -1.1rem;
+        padding-left: 0.1rem;
+      }
+      .tips {
+        border-left: 4px solid var(--color-primary);
+        background: #e0e7ef;
+        color: var(--color-primary);
+        font-size: 1rem;
+        box-shadow: 0 1px 8px #3b82f611;
+        margin-top: 1rem;
+        padding: 1rem 1.2rem;
+        border-radius: 0.7rem;
+        animation: fadeIn 1.2s cubic-bezier(.4,0,.2,1);
+      }
+
+      /* --- OUTPUT PANEL --- */
+      .output-panel {
+        background: var(--bg-panel);
+        border-radius: 1.25rem;
+        padding: 2rem 2.5rem 2.2rem 2.5rem;
+        min-width: 340px;
+        max-width: 900px;
+        flex: 2.2 1 600px;
+        box-shadow: var(--shadow-panel), 0 2px 0 var(--color-primary-light);
+        border: 1.5px solid var(--color-border);
+        margin-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        transition: box-shadow 0.2s, border-color 0.2s;
+        animation: fadeIn 0.9s cubic-bezier(.4,0,.2,1);
+      }
+      .output-panel:hover {
+        box-shadow: 0 12px 36px #1e293b22, 0 2px 0 var(--color-primary);
+        border-color: var(--color-primary);
+      }
+      
+      #code-display {
+        background: linear-gradient(120deg, var(--bg-body-start) 80%, var(--bg-body-end) 100%);
+        border: 1.5px solid var(--color-border-input);
+        border-radius: 1rem;
+        padding: 2.2rem;
+        min-height: 340px;
+        color: var(--color-text-main);
+        font-family: var(--font-mono);
+        white-space: pre-wrap;
+        box-shadow: 0 1px 0 #3b82f622;
+        font-size: 1.08rem;
+        flex: 1 1 auto;
+        overflow-x: auto;
+        max-height: 540px;
+      }
+
+      /* --- FOOTER --- */
+      .main-footer {
+        background: #f1f5f9;
+        border-top: 1.5px solid var(--color-border);
+        margin-top: 2.5rem;
+        padding: 1.2rem 0 0.7rem 0;
+        text-align: center;
+        color: var(--color-text-muted);
+        font-size: 0.98rem;
+        box-shadow: 0 -2px 12px #1e293b0a;
+        animation: fadeInUp 1.1s cubic-bezier(.4,0,.2,1);
+      }
+      .footer-logo {
+        width: 32px;
+        height: 32px;
+        vertical-align: middle;
+        margin-right: 0.5rem;
+        border-radius: 0.5rem;
+        border: 1.5px solid var(--color-primary-light);
+        background: var(--bg-white);
+        box-shadow: 0 1px 4px #3b82f633;
+        transition: box-shadow 0.18s, border-color 0.18s;
+      }
+      .footer-logo:hover {
+        box-shadow: 0 2px 12px #2563eb33;
+        border-color: var(--color-primary);
+      }
+      
+      /* --- RESPONSIVE --- */
+      @media (max-width: 1100px) {
+        main.container { flex-direction: column; gap: 1.5rem; }
+        .config-panel, .output-panel { max-width: 100%; }
+      }
+      @media (max-width: 900px) {
+        .header-content { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+      }
+      @media (max-width: 700px) {
+        .container { padding: 0 0.5rem !important; }
+        .config-panel, .output-panel { padding: 1.2rem 0.7rem; }
+        .form-row { flex-direction: column; gap: 1.2rem; }
+      }
+      
+      /* --- KEYFRAMES --- */
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+      @keyframes fadeInUp { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } }
+      @keyframes fadeInDown { from { opacity: 0; transform: translateY(-32px); } to { opacity: 1; transform: none; } }
+      @keyframes fadeInLeft { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+    </style>
+</head>
+
+<body>
+    <header class="main-header">
+        <div class="container header-content">
+            <img src="/plc.gif" alt="PLC Icon" class="logo-plc" />
+            <div class="header-texts">
+                <h1 class="brand-title">PLC AI Studio</h1>
+                <p class="brand-desc">Genera código PLC profesional en segundos, listo para descargar e importar en tu software industrial.</p>
+            </div>
+        </div>
+    </header>
+
+    <section class="info-section">
+        <div class="container info-content">
+            <div class="warning-box">
+                <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" stroke="currentColor" stroke-width="2" fill="#fffde7"/><path d="M12 7v5m0 4h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <span><b>Advertencia:</b> Este programa es una herramienta de ayuda y <b>no reemplaza la revisión ni validación de un profesional</b>.</span>
+            </div>
+
+            <h3 style="color:var(--color-primary); font-size:1.2rem; font-weight:700; margin-bottom:0.7rem;">¿Cómo funciona?</h3>
+            <ul class="list-steps">
+                <li>1. Selecciona el proveedor de IA (<b>Google Gemini</b> u <b>OpenAI</b>).</li>
+                <li>2. Ingresa tu API Key:
+                    <ul>
+                        <li>• Para <b>Google Gemini</b>: <a href="https://aistudio.google.com/app/apikey" target="_blank" class="link-primary">aistudio.google.com</a></li>
+                        <li>• Para <b>OpenAI</b>: <a href="https://platform.openai.com/api-keys" target="_blank" class="link-primary">platform.openai.com/api-keys</a></li>
+                    </ul>
+                </li>
+                <li>3. Describe el proceso y requerimientos de lógica PLC.</li>
+                <li>4. Selecciona marca, modelo y lenguaje.</li>
+                <li>5. Clic en <b>Generar código</b> y descargar.</li>
+            </ul>
+            
+            <div class="tips">
+                <b>Tips Pro:</b>
+                <ul>
+                    <li>• El historial y los datos se procesan localmente (Client-Side).</li>
+                    <li>• Describe condiciones de error y alarmas para un código más robusto.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <main class="container">
+        <!-- Configuration Panel -->
+        <section class="config-panel">
+            <div class="panel-header">
+                <div class="accent-bar"></div>
+                <h2 class="panel-title">Configuración</h2>
+            </div>
+
+            <form id="config-form" class="config-form" autocomplete="off">
+                <div class="form-group">
+                    <label for="provider-select">Proveedor de IA</label>
+                    <select id="provider-select" required>
+                        <option value="gemini">Google Gemini</option>
+                        <option value="openai">OpenAI</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="user-api-key" id="api-key-label">API Key de Google Gemini</label>
+                    <input type="password" id="user-api-key" required placeholder=" " autocomplete="new-password" />
+                </div>
+                <div class="help-text" id="api-key-help">
+                    Tu clave <b>no se guardará</b>, solo se usará en el navegador para la conexión segura.
+                </div>
+
+                <div class="form-group">
+                    <label for="prompt">Descripción del proceso</label>
+                    <textarea id="prompt" rows="5" required placeholder="Ej: Control de bomba con alternancia y monitoreo de nivel..." style="resize: vertical;"></textarea>
+                </div>
+
+                <div class="form-row">
+                              <div class="form-group large">
+                                <label for="preset-process">Proceso estándar</label>
+                                <select id="preset-process">
+                                  <option value="">-- Selecciona un proceso común --</option>
+                                  <option value="arranque_paro_bomba">Arranque y paro de bomba</option>
+                                  <option value="control_nivel_tanque">Control de nivel de tanque</option>
+                                  <option value="control_temperatura">Control de temperatura</option>
+                                  <option value="control_motor">Control de motor trifásico</option>
+                                  <option value="cinta_transportadora">Cinta transportadora</option>
+                                  <option value="control_valvula">Control de válvula</option>
+                                  <option value="alarma_general">Alarma general y reset</option>
+                                  <option value="control_luces">Control de luces</option>
+                                  <option value="control_puerta">Control de puerta automática</option>
+                                  <option value="contaje_objetos">Contaje de objetos</option>
+                                  <option value="control_ventilador">Control de ventilador</option>
+                                </select>
+                              </div>
+                    <div class="form-group large">
+                        <label for="plc-brand">Marca PLC</label>
+                        <select id="plc-brand" required>
+                            <option value="Siemens S7-1200">Siemens S7-1200</option>
+                            <option value="Siemens S7-1500">Siemens S7-1500</option>
+                            <option value="Allen-Bradley CompactLogix">Allen-Bradley CompactLogix</option>
+                            <option value="Allen-Bradley ControlLogix">Allen-Bradley ControlLogix</option>
+                            <option value="Mitsubishi FX5U">Mitsubishi FX5U</option>
+                            <option value="Mitsubishi Q Series">Mitsubishi Q Series</option>
+                            <option value="Omron CP1E">Omron CP1E</option>
+                            <option value="Omron CJ2M">Omron CJ2M</option>
+                            <option value="Schneider M241">Schneider M241</option>
+                            <option value="Delta AS Series">Delta AS Series</option>
+                            <option value="Panasonic FP-X">Panasonic FP-X</option>
+                            <option value="Keyence KV">Keyence KV</option>
+                            <option value="Fatek FBs">Fatek FBs</option>
+                            <option value="ABB AC500">ABB AC500</option>
+                            <option value="WAGO 750">WAGO 750</option>
+                            <option value="Yokogawa FA-M3">Yokogawa FA-M3</option>
+                            <option value="Otros">Otros</option>
+                        </select>
+                    </div>
+                    <div class="form-group small">
+                        <label for="plc-model">Modelo (Op.)</label>
+                        <input type="text" id="plc-model" />
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group large">
+                        <label for="language">Lenguaje</label>
+                        <select id="language" required>
+                            <option value="scl">Texto Estructurado (ST/SCL)</option>
+                            <option value="ladder">Diagrama Ladder (LAD)</option>
+                            <option value="fbd">Bloques Funcionales (FBD)</option>
+                            <option value="il">Lista de Instrucciones (IL)</option>
+                        </select>
+                    </div>
+                    <div class="form-group small">
+                        <label for="file-format">Formato</label>
+                        <select id="file-format" required>
+                            <option value="auto">Automático</option>
+                            <option value="scl">.scl (Siemens)</option>
+                            <option value="L5X">.L5X (Rockwell)</option>
+                            <option value="gxw">.gxw (Mitsubishi)</option>
+                            <option value="cxp">.cxp (Omron)</option>
+                            <option value="stu">.stu (Schneider)</option>
+                            <option value="dvp">.dvp (Delta)</option>
+                            <option value="plc">.plc (Panasonic)</option>
+                            <option value="kv">.kv (Keyence)</option>
+                            <option value="fsc">.fsc (Fatek)</option>
+                            <option value="ac500">.ac500 (ABB)</option>
+                            <option value="wago">.wago (WAGO)</option>
+                            <option value="ykg">.ykg (Yokogawa)</option>
+                            <option value="txt">.txt</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="generate-btn" type="submit" class="btn-primary">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Generar código
+                </button>
+            </form>
+        </section>
+
+        <!-- Output Panel -->
+        <section class="output-panel">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.7rem;">
+                <div style="display:flex;align-items:center;gap:0.7rem;">
+                    <div style="width:6px;height:1.7rem;background:var(--color-primary);border-radius:6px;"></div>
+                    <h2 style="font-size:1.12rem; font-weight:800; margin:0;">Resultado generado</h2>
+                </div>
+                <button id="download-btn" class="btn-download" style="display:none;">
+                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 5v14m0 0l-5-5m5 5l5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Descargar archivo
+                </button>
+            </div>
+            
+            <div id="code-display">/* El código generado aparecerá aquí */</div>
+        </section>
+    </main>
+
+    <footer class="main-footer">
+        <div class="container">
+            <img src="/itm.png" alt="ITM Logo" class="footer-logo" />
+            <span>PLC AI Studio &copy; 2026 — Desarrollado por <span style="font-weight:700; color:var(--color-primary-hover);">DIEGO MARTINEZ - INGENIERO DEL INSTITUTO TECNOLÓGICO DE MEXICALI</span></span>
+        </div>
+    </footer>
+
+    <!-- App Logic encapsulated to prevent global namespace pollution -->
+    <script>
+      (function() {
+        // --- State Management ---
+        const state = {
+            lastGeneratedCode: '',
+            isGenerating: false
+        };
+
+        // --- DOM Elements ---
+        const elements = {
+            form: document.getElementById('config-form'),
+            providerSelect: document.getElementById('provider-select'),
+            apiKeyInput: document.getElementById('user-api-key'),
+            apiKeyLabel: document.getElementById('api-key-label'),
+            apiKeyHelp: document.getElementById('api-key-help'),
+            brandSelect: document.getElementById('plc-brand'),
+            formatSelect: document.getElementById('file-format'),
+            downloadBtn: document.getElementById('download-btn'),
+            codeDisplay: document.getElementById('code-display'),
+            modelInput: document.getElementById('plc-model'),
+            languageSelect: document.getElementById('language')
+        };
+
+        // --- Configuration & Utils ---
+        const brandFormatMap = {
+            'Siemens': 'scl',
+            'Allen-Bradley': 'L5X',
+            'Mitsubishi': 'gxw',
+            'Omron': 'cxp',
+            'default': 'txt'
+        };
+
+        const providerConfig = {
+            'gemini': { label: 'API Key de Google Gemini', provider: 'Google Gemini' },
+            'openai': { label: 'API Key de OpenAI', provider: 'OpenAI' }
+        };
+
+        const PROMPT_BASE = `Rol: Ingeniero Senior en Automatización (IEC 61131-3).
+        Objetivo: Generar código PLC robusto, comentado y estructurado.
+        Salida: Solo el código fuente limpio (sin markdown de chat alrededor).`;
+
+        // --- Logic Functions ---
+
+        /** Updates the file format select based on brand choice */
+        function handleBrandChange() {
+            const selectedBrand = elements.brandSelect.value;
+            if (elements.formatSelect.value === 'auto') {
+                let foundFormat = brandFormatMap.default;
+                for (const [key, format] of Object.entries(brandFormatMap)) {
+                    if (selectedBrand.includes(key)) {
+                        foundFormat = format;
+                        break;
+                    }
+                }
+                elements.formatSelect.value = foundFormat;
+            }
+        }
+
+        /** Updates API input UI based on provider */
+        function handleProviderChange() {
+            const type = elements.providerSelect.value;
+            const config = providerConfig[type];
+            elements.apiKeyLabel.textContent = config.label;
+            elements.apiKeyHelp.innerHTML = `Tu clave <b>no se guardará</b> ni se enviará a servidores externos. Conexión directa a ${config.provider}.`;
+            elements.apiKeyInput.value = ''; // Security clear
+        }
+
+        function buildFileName() {
+            const clean = str => str.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+            const brand = clean(elements.brandSelect.value);
+            const model = clean(elements.modelInput.value);
+            const lang = clean(elements.languageSelect.value);
+            
+            // Determine extension
+            let ext = elements.formatSelect.value;
+            if (ext === 'auto') {
+               // Re-run simple logic or get current value if we updated DOM
+               ext = 'txt'; // fallback
+            }
+            if (!ext.startsWith('.')) ext = '.' + ext;
+
+            return `plc_${brand}${model ? '_' + model : ''}_${lang}${ext}`;
+        }
+
+        function downloadFile() {
+            if (!state.lastGeneratedCode) return;
+            
+            const filename = buildFileName();
+            const blob = new Blob([state.lastGeneratedCode], { type: 'text/plain' });
+            const link = document.createElement('a');
+            
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- Mock Integration (Simulating external script behavior) ---
+        // Expose a controlled method for external scripts to trigger success
+        window.appAPI = {
+            displayResult: (code) => {
+                state.lastGeneratedCode = code;
+                elements.codeDisplay.textContent = code;
+                elements.downloadBtn.style.display = 'flex';
+                // Trigger visual feedback logic here if needed
+            }
+        };
+
+        // --- Event Listeners ---
+        elements.brandSelect.addEventListener('change', handleBrandChange);
+        elements.providerSelect.addEventListener('change', handleProviderChange);
+        elements.downloadBtn.addEventListener('click', downloadFile);
+
+        elements.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = {
+                prompt: elements.form.querySelector('#prompt').value,
+                // ... gather other data
+            };
+            const finalPrompt = `${PROMPT_BASE}\n\nRequerimiento: ${formData.prompt}`;
+            
+            // Visual feedback of loading
+            elements.codeDisplay.textContent = "// Generando lógica, por favor espere...";
+            
+            // Aquí iría la llamada real a la función de script.js
+            // Simulación:
+            /*
+            fetch('/api/generate', ...).then(...)
+            */
+            
+            // NOTA PARA EL USUARIO:
+            // Asegúrate de que tu script.js llame a `window.appAPI.displayResult(codigo)` 
+            // cuando la IA responda.
+        });
+
+        // Initialize UI
+        handleProviderChange();
+        
+      })();
+    </script>
+    <script src="/script.js"></script>
+</body>
+</html>
