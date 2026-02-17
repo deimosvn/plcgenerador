@@ -1,121 +1,96 @@
-import OpenAI from 'openai';
+// ─────────────────────────────────────────────────────────────
+// API Route: /api/generate — Proxy para generación de código PLC
+// Este endpoint puede usarse como alternativa server-side.
+// La app actualmente llama a Gemini desde el cliente.
+// ─────────────────────────────────────────────────────────────
+
 import { NextRequest, NextResponse } from 'next/server';
 
-function getApiKeyFromRequest(request: NextRequest): string | undefined {
-  // Permite API key por header personalizado
-  const headerKey = request.headers.get('x-user-apikey');
-  if (headerKey && headerKey.trim().length > 10) return headerKey.trim();
-  // Fallback a variable de entorno
-  return process.env.OPENAI_API_KEY;
-}
-
-const buildFallbackCode = (params: {
-  description: string;
-  plcBrand: string;
-  plcModel?: string;
-  language: string;
-}) => {
-  const { description, plcBrand, plcModel, language } = params;
-  const header = `${plcBrand}${plcModel ? ` ${plcModel}` : ''}`.trim();
-  return `(*\n  PROGRAMA DE RESPALDO GENERADO LOCALMENTE\n  EQUIPO: ${header || 'PLC ESTÁNDAR'}\n  LENGUAJE OBJETIVO: ${language.toUpperCase()}\n  REQUERIMIENTOS: ${description}\n*)\n\nPROGRAM Main\nVAR_INPUT\n    StartButton : BOOL;\n    StopButton  : BOOL;\n    SensorOK    : BOOL;\nEND_VAR\n\nVAR_OUTPUT\n    PumpCmd : BOOL;\n    Alarm   : BOOL;\nEND_VAR\n\nVAR\n    Running : BOOL;\nEND_VAR\n\n(* Lógica simple de respaldo para pruebas locales *)\nIF StartButton AND NOT StopButton AND SensorOK THEN\n    Running := TRUE;\nELSIF StopButton OR NOT SensorOK THEN\n    Running := FALSE;\nEND_IF;\n\nPumpCmd := Running;\nAlarm := NOT SensorOK;\n\nEND_PROGRAM`;
-};
+const GEMINI_ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { description, plcBrand, plcModel, language } = body;
+    const { description, plcBrand, plcModel, language, apiKey } = body;
 
     if (!description || !plcBrand || !language) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        { error: 'Faltan campos requeridos: description, plcBrand, language' },
+        { status: 400 },
       );
     }
 
-    const apiKey = getApiKeyFromRequest(request);
-    const openaiClient = apiKey ? new OpenAI({ apiKey }) : null;
+    const key = apiKey || process.env.GEMINI_API_KEY;
+    if (!key) {
+      return NextResponse.json(
+        { error: 'API Key no proporcionada. Configura tu clave de Gemini.' },
+        { status: 401 },
+      );
+    }
 
-    const systemPrompt = `You are an expert PLC (Programmable Logic Controller) programmer with deep knowledge of:
-- Siemens (S7-1200, S7-1500, TIA Portal)
-- Allen-Bradley (CompactLogix, ControlLogix, Studio 5000)
-- Mitsubishi (FX series, Q series)
-- Omron (CP, CJ series)
-- IEC 61131-3 standards
+    const systemPrompt =
+      'Eres un ingeniero de automatización industrial senior especializado en programación PLC según IEC 61131-3. Genera código completo, funcional, documentado en español, con declaración de variables, manejo de errores y mejores prácticas de seguridad. Responde SOLO con el código.';
 
-Your task is to generate production-ready PLC code based on user requirements.
-Always include:
-1. Comments explaining the logic
-2. Variable declarations
-3. Input/Output mappings
-4. Error handling where applicable
-5. Best practices for safety and reliability`;
+    const userPrompt = `Genera código ${language.toUpperCase()} para un PLC ${plcBrand}${plcModel ? ` (${plcModel})` : ''}.
 
-    const userPrompt = `Generate ${language.toUpperCase()} code for a ${plcBrand}${plcModel ? ` (${plcModel})` : ''} PLC.
-
-Requirements:
+Requerimientos:
 ${description}
 
-Code Format Guidelines:
-- For Ladder Diagram: Use text-based ladder notation with clear rungs and logic
-- For Structured Text: Use IEC 61131-3 ST syntax
-- For Function Block Diagram: Use block notation with connections
-- For Python: Use clean, documented Python code
+Incluye: declaración de variables, lógica principal, comentarios descriptivos y manejo de errores.`;
 
-Include:
-1. Program description at the top
-2. Variable declarations (inputs, outputs, internal variables)
-3. Main logic/program
-4. Comments for each section
-5. Safety considerations
+    const response = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: userPrompt }] }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 8192,
+        },
+      }),
+    });
 
-Generate only the code, without additional explanation.`;
-
-    if (!openaiClient) {
-      return NextResponse.json({
-        code: buildFallbackCode({ description, plcBrand, plcModel, language }),
-        description,
-        plcBrand,
-        plcModel,
-        language,
-        timestamp: Date.now(),
-        warning: 'Generado con plantilla local porque OPENAI_API_KEY no está configurada.',
-      });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API Error:', response.status, errorText);
+      return NextResponse.json(
+        { error: `Error de la API de Gemini (${response.status})` },
+        { status: response.status },
+      );
     }
 
-    let generatedCode = '';
-    try {
-      const completion = await openaiClient.chat.completions.create({
-        model: 'gpt-4o-mini',
-        temperature: 0.7,
-        max_tokens: 2048,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-      });
-      generatedCode = completion.choices?.[0]?.message?.content?.trim() ?? '';
-    } catch (error) {
-      console.error('OpenAI request failed, returning fallback:', error);
+    const data = await response.json();
+    const generatedText =
+      data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    if (!generatedText) {
+      return NextResponse.json(
+        { error: 'La API no devolvió contenido.' },
+        { status: 502 },
+      );
     }
 
-    if (!generatedCode) {
-      generatedCode = buildFallbackCode({ description, plcBrand, plcModel, language });
-    }
+    // Clean markdown wrappers
+    const code = generatedText
+      .replace(/^```[\w]*\n?/gm, '')
+      .replace(/\n?```$/gm, '')
+      .trim();
 
     return NextResponse.json({
-      code: generatedCode,
+      code,
       description,
       plcBrand,
       plcModel,
       language,
       timestamp: Date.now(),
-      warning: generatedCode.includes('PROGRAMA DE RESPALDO') ? 'Respuesta generada localmente por falta de salida del modelo.' : undefined,
     });
   } catch (error) {
-    console.error('API Error:', error);
+    console.error('API Route Error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate code. Please try again.' },
-      { status: 500 }
+      { error: 'Error interno del servidor.' },
+      { status: 500 },
     );
   }
 }

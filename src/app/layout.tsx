@@ -1,27 +1,46 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "PLC AI Studio - AI-Powered PLC Code Generator",
-  description: "Generate production-ready PLC code in seconds using AI. Support for Siemens, Allen-Bradley, Mitsubishi, Omron and more.",
-  keywords: "PLC, code generator, AI, Siemens, Allen-Bradley, Mitsubishi, automation",
-  authors: [{ name: "PLC AI Studio" }],
+  title: 'PLC AI Studio — Generador de Código PLC con IA',
+  description:
+    'Genera código PLC profesional en segundos con inteligencia artificial. Soporte para Siemens, Allen-Bradley, Mitsubishi, Omron, Schneider, Beckhoff, ABB y más. Compatible con IEC 61131-3.',
+  keywords: [
+    'PLC',
+    'generador de código',
+    'IA',
+    'Siemens',
+    'Allen-Bradley',
+    'Mitsubishi',
+    'automatización',
+    'IEC 61131-3',
+    'Structured Text',
+    'Ladder',
+  ],
+  authors: [{ name: 'Diego Martinez' }],
   openGraph: {
-    title: "PLC AI Studio",
-    description: "AI-powered PLC code generator",
-    type: "website",
+    title: 'PLC AI Studio',
+    description: 'Generador de código PLC profesional con inteligencia artificial',
+    type: 'website',
+    locale: 'es_ES',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#1e40af',
 };
 
 export default function RootLayout({
@@ -30,15 +49,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="es" className="scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-slate-800 min-h-screen flex flex-col`}
-        style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%)' }}
+        className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased text-slate-800 min-h-screen`}
       >
-        <main className="flex-1">{children}</main>
-        <footer className="w-full py-6 px-6 border-t border-slate-200 bg-white/80 text-center text-sm text-slate-500 mt-12">
-          © 2026 Diego Martinez. Todos los derechos reservados.
-        </footer>
+        {children}
       </body>
     </html>
   );
