@@ -114,3 +114,12 @@ export interface APIRequest {
   plcModel: string;
   language: string;
 }
+
+/** Resultado de análisis de código */
+export interface AnalysisResult {
+  id: string;
+  originalCode: string;
+  fileName: string;
+  analysisText: string;
+  timestamp: number;
+}

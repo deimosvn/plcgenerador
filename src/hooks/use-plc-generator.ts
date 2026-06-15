@@ -6,24 +6,22 @@
 
 import { useState, useCallback } from 'react';
 import { useLocalStorage } from './use-local-storage';
-import { generatePLCCode } from '@/lib/gemini-client';
+import { generatePLCCode, analyzePLCCode } from '@/lib/gemini-client';
 import { APP_CONFIG } from '@/lib/constants';
-import type { GenerationResult, GenerationFormData } from '@/types';
+import type { GenerationResult, GenerationFormData, AnalysisResult } from '@/types';
 
 export function usePLCGenerator() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentResult, setCurrentResult] = useState<GenerationResult | null>(null);
-  const [apiKey, setApiKeyState] = useLocalStorage<string>('plc-api-key', '');
+  const [currentAnalysis, setCurrentAnalysis] = useState<AnalysisResult | null>(null);
   const [history, setHistory] = useLocalStorage<GenerationResult[]>('plc-history', []);
-
-  const setApiKey = useCallback((key: string) => {
-    setApiKeyState(key);
-  }, [setApiKeyState]);
+  const apiKey = 'AIzaSyDQMejzD4vP0XE2npuLOVVgLpZx68rTk6c';
 
   const generate = useCallback(async (formData: GenerationFormData) => {
     setLoading(true);
     setError(null);
+    setCurrentAnalysis(null);
 
     try {
       const result = await generatePLCCode(formData, apiKey);
@@ -45,8 +43,27 @@ export function usePLCGenerator() {
     }
   }, [apiKey, setHistory]);
 
+  const analyzeCode = useCallback(async (code: string, fileName: string) => {
+    setLoading(true);
+    setError(null);
+    setCurrentResult(null);
+
+    try {
+      const result = await analyzePLCCode(code, fileName, apiKey);
+      setCurrentAnalysis(result);
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Error desconocido al analizar código';
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [apiKey]);
+
   const loadFromHistory = useCallback((item: GenerationResult) => {
     setCurrentResult(item);
+    setCurrentAnalysis(null);
     setError(null);
   }, []);
 
@@ -60,6 +77,7 @@ export function usePLCGenerator() {
   const clearHistory = useCallback(() => {
     setHistory([]);
     setCurrentResult(null);
+    setCurrentAnalysis(null);
   }, [setHistory]);
 
   const clearError = useCallback(() => {
@@ -71,11 +89,11 @@ export function usePLCGenerator() {
     loading,
     error,
     currentResult,
-    apiKey,
+    currentAnalysis,
     history,
     // Actions
     generate,
-    setApiKey,
+    analyzeCode,
     loadFromHistory,
     deleteHistoryItem,
     clearHistory,

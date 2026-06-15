@@ -1,5 +1,5 @@
-import { PLCGeneratorPage } from '@/components/plc-generator-page';
+import { LandingPage } from '@/components/landing-page';
 
 export default function Home() {
-  return <PLCGeneratorPage />;
+  return <LandingPage />;
 }

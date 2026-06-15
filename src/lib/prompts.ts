@@ -237,3 +237,22 @@ xAlarm := NOT xEmergency OR NOT xSensorOK;
 
 END_PROGRAM`;
 }
+
+/** Construye el prompt para analizar código PLC existente */
+export function buildAnalyzePrompt(code: string): string {
+  return `Eres un ingeniero auditor de control e instrumentación y experto en seguridad de código PLC. 
+Tu tarea es auditar, analizar y explicar el siguiente código PLC.
+
+REGLAS DE AUDITORÍA:
+1. Describe brevemente y paso a paso el proceso o la lógica que implementa el código.
+2. Identifica posibles fallas lógicas, errores de sintaxis, o malas prácticas (si las hay).
+3. Evalúa si el código considera aspectos de seguridad básicos (por ejemplo, paros de emergencia o condiciones iniciales seguras) y menciona qué falta.
+4. Tu respuesta debe estar formateada en Markdown clara y profesional, usando subtítulos para "Descripción del Proceso", "Posibles Fallas", "Aspectos de Seguridad", y "Recomendaciones de Mejora".
+5. No modifiques el código, solo analízalo de manera crítica y profesional en español.
+
+CÓDIGO A ANALIZAR:
+\`\`\`
+${code}
+\`\`\`
+`;
+}

@@ -29,6 +29,10 @@ export const metadata: Metadata = {
     'Ladder',
   ],
   authors: [{ name: 'Diego Martinez' }],
+  icons: {
+    icon: '/plcicon.png',
+    apple: '/plcicon.png',
+  },
   openGraph: {
     title: 'PLC AI Studio',
     description: 'Generador de código PLC profesional con inteligencia artificial',
