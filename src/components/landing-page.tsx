@@ -192,6 +192,7 @@ export function LandingPage() {
             loop
             muted
             playsInline
+            preload="auto"
             className="w-full h-full object-cover opacity-80"
           >
             <source src="/robot_optimized.mp4" type="video/mp4" />
