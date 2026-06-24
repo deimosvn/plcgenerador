@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, useScroll, useTransform } from 'framer-motion';
@@ -138,13 +138,25 @@ const staggerContainer: any = {
 
 export function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // React no siempre aplica el atributo `muted`, y sin él el navegador
+  // bloquea el autoplay. Lo forzamos por ref y lanzamos la reproducción.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = true;
+    video.play().catch(() => {
+      /* el navegador puede diferir el autoplay; el poster cubre la espera */
+    });
+  }, []);
+
   // Parallax Setup
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"]
   });
-  
+
   // El video hace un parallax sutil hacia abajo mientras hacemos scroll
   const videoY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const videoScale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
@@ -180,19 +192,21 @@ export function LandingPage() {
       </motion.nav>
 
       {/* ─── Hero Immersive Video ─── */}
-      <section ref={containerRef} className="relative h-[110vh] w-full flex items-center justify-center overflow-hidden">
-        
+      <section ref={containerRef} className="relative isolate h-[110vh] w-full flex items-center justify-center overflow-hidden bg-black">
+
         {/* Video Background with Parallax */}
-        <motion.div 
+        <motion.div
           style={{ y: videoY, scale: videoScale }}
-          className="absolute inset-0 w-full h-full -z-20"
+          className="absolute inset-0 w-full h-full z-0"
         >
           <video
+            ref={videoRef}
             autoPlay
             loop
             muted
             playsInline
             preload="auto"
+            poster="/hero-robot.png"
             className="w-full h-full object-cover opacity-80"
           >
             <source src="/robot_optimized.mp4" type="video/mp4" />
