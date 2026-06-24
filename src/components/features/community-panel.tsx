@@ -11,7 +11,7 @@ export function CommunityPanel() {
         </div>
         <h2 className="text-2xl font-bold text-slate-800 mb-2">Comunidad PLC</h2>
         <p className="text-slate-500 mb-6 max-w-lg mx-auto">
-          Próximamente podrás subir tus archivos PLC, describir lo que hacen y compartirlos con otros usuarios de la comunidad. ¡Podrán darle 'like' y descargar tus aportes!
+          Próximamente podrás subir tus archivos PLC, describir lo que hacen y compartirlos con otros usuarios de la comunidad. ¡Podrán darle «like» y descargar tus aportes!
         </p>
         
         {/* Espacio en blanco reservado para el formulario de subida (futuro) */}

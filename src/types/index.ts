@@ -123,3 +123,47 @@ export interface AnalysisResult {
   analysisText: string;
   timestamp: number;
 }
+
+/** Punto de I/O extraído de un diagrama */
+export interface ExtractedIO {
+  type: 'DI' | 'DO' | 'AI' | 'AO' | string;
+  tag: string;
+  description: string;
+  device?: string;
+  signal?: string;
+}
+
+/** Resultado de la extracción por visión de un diagrama eléctrico */
+export interface ExtractionData {
+  summary: string;
+  suggestedDescription: string;
+  io: ExtractedIO[];
+  devices: string[];
+  notes?: string[];
+}
+
+/** Componente de la lista de materiales del tablero */
+export interface BOMItem {
+  item: string;
+  reference: string;
+  quantity: number;
+  notes?: string;
+}
+
+/** Conexión de un terminal del PLC */
+export interface WiringConnection {
+  terminal: string;
+  type: 'DI' | 'DO' | 'AI' | 'AO' | string;
+  tag: string;
+  device: string;
+  wire?: string;
+}
+
+/** Diagrama de conexión + BOM generado por la IA */
+export interface WiringData {
+  plc: string;
+  powerSupply: string;
+  connections: WiringConnection[];
+  bom: BOMItem[];
+  notes?: string[];
+}

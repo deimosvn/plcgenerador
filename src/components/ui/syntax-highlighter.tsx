@@ -95,24 +95,29 @@ function highlightTokens(text: string): string {
   .replace(/(&gt;=|&lt;=|&lt;&gt;|&gt;|&lt;)/g, '<span class="text-violet-400">$1</span>');
 }
 
-export function PLCSyntaxHighlighter({ code, language }: SyntaxHighlighterProps) {
-  const lines = code.split('\n');
+/** Resalta todas las líneas, llevando el estado de comentario de bloque. */
+function highlightAllLines(lines: string[]): string[] {
+  const results: string[] = [];
   let inBlockComment = false;
 
-  const highlightedLines = lines.map((line) => {
+  for (const line of lines) {
     if (line.includes('(*')) inBlockComment = true;
 
-    let result: string;
-    if (inBlockComment) {
-      result = `<span class="text-emerald-400/80 italic">${escapeHtml(line)}</span>`;
-    } else {
-      result = highlightLine(line);
-    }
+    results.push(
+      inBlockComment
+        ? `<span class="text-emerald-400/80 italic">${escapeHtml(line)}</span>`
+        : highlightLine(line),
+    );
 
     if (line.includes('*)')) inBlockComment = false;
+  }
 
-    return result;
-  });
+  return results;
+}
+
+export function PLCSyntaxHighlighter({ code, language }: SyntaxHighlighterProps) {
+  const lines = code.split('\n');
+  const highlightedLines = highlightAllLines(lines);
 
   return (
     <div className="relative group">

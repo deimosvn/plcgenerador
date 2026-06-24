@@ -1,4 +1,8 @@
+'use client';
+
 import React, { useState, useRef } from 'react';
+import { Markdown } from '@/components/ui/markdown';
+import { MAX_ANALYZE_LENGTH } from '@/lib/validation';
 import type { AnalysisResult } from '@/types';
 
 interface CodeAnalyzerProps {
@@ -10,18 +14,29 @@ interface CodeAnalyzerProps {
 export function CodeAnalyzer({ onAnalyze, loading, result }: CodeAnalyzerProps) {
   const [fileContent, setFileContent] = useState<string>('');
   const [fileName, setFileName] = useState<string>('');
+  const [fileError, setFileError] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setFileContent(event.target?.result as string);
-      };
-      reader.readAsText(file);
+    if (!file) return;
+
+    setFileError('');
+
+    // Límite de tamaño coherente con la validación del servidor.
+    if (file.size > MAX_ANALYZE_LENGTH) {
+      setFileError(`El archivo supera el máximo de ${(MAX_ANALYZE_LENGTH / 1000).toFixed(0)} KB.`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
     }
+
+    setFileName(file.name);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setFileContent((event.target?.result as string) ?? '');
+    };
+    reader.onerror = () => setFileError('No se pudo leer el archivo.');
+    reader.readAsText(file);
   };
 
   const handleAnalyzeClick = () => {
@@ -33,6 +48,7 @@ export function CodeAnalyzer({ onAnalyze, loading, result }: CodeAnalyzerProps) 
   const clearFile = () => {
     setFileContent('');
     setFileName('');
+    setFileError('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -57,7 +73,11 @@ export function CodeAnalyzer({ onAnalyze, loading, result }: CodeAnalyzerProps) 
               accept=".txt,.st,.awl,.l5x,.xml,.scl"
               className="hidden"
             />
-            
+
+            {fileError && (
+              <p className="mb-4 text-sm font-medium text-red-600">{fileError}</p>
+            )}
+
             {!fileContent ? (
               <div className="flex flex-col items-center justify-center">
                 <div 
@@ -124,9 +144,7 @@ export function CodeAnalyzer({ onAnalyze, loading, result }: CodeAnalyzerProps) 
             </button>
           </div>
           
-          <div className="prose prose-slate prose-sm sm:prose-base max-w-none mb-6 text-slate-700 whitespace-pre-wrap font-sans">
-            {result.analysisText}
-          </div>
+          <Markdown content={result.analysisText} className="max-w-none text-sm sm:text-base" />
         </div>
       )}
     </div>

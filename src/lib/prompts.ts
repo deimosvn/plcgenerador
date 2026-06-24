@@ -238,6 +238,99 @@ xAlarm := NOT xEmergency OR NOT xSensorOK;
 END_PROGRAM`;
 }
 
+/** Construye el prompt para refinar código existente según una instrucción */
+export function buildRefinePrompt(args: {
+  code: string;
+  instruction: string;
+  plcBrand: string;
+  language: string;
+}): string {
+  const brand = PLC_BRANDS[args.plcBrand as PLCBrandKey];
+  const language = PLC_LANGUAGES.find((l) => l.key === args.language);
+
+  return `Tienes un programa PLC existente y debes MODIFICARLO según la instrucción del usuario.
+
+EQUIPO: ${brand?.label || args.plcBrand}${brand ? ` (${brand.software})` : ''}
+LENGUAJE: ${language?.label || args.language}
+
+REGLAS:
+1. Aplica EXACTAMENTE el cambio solicitado, conservando todo lo demás que funcione.
+2. Mantén el estilo, la nomenclatura y el encabezado de metadata del código original.
+3. No elimines lógica de seguridad existente salvo que se pida explícitamente.
+4. Devuelve el PROGRAMA COMPLETO actualizado, no solo el fragmento cambiado.
+5. Responde SOLO con el código, sin explicaciones fuera del código.
+
+INSTRUCCIÓN DEL USUARIO:
+${args.instruction}
+
+CÓDIGO ACTUAL:
+\`\`\`
+${args.code}
+\`\`\`
+
+Genera el código completo modificado.`;
+}
+
+/** Construye el prompt de visión para extraer I/O de un diagrama eléctrico */
+export function buildExtractPrompt(): string {
+  return `Eres un ingeniero eléctrico industrial. Analiza la imagen o PDF de un diagrama eléctrico / esquema de conexión / plano de tablero que se adjunta.
+
+Tu tarea es EXTRAER la información necesaria para programar un PLC.
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
+{
+  "summary": "resumen breve de lo que muestra el diagrama (1-2 frases)",
+  "suggestedDescription": "descripción del proceso de automatización lista para usar como requerimiento de generación de código PLC, redactada en español con entradas, salidas, secuencias y seguridades que se deduzcan del diagrama",
+  "io": [
+    { "type": "DI|DO|AI|AO", "tag": "nombre_de_variable_sugerido", "description": "qué es", "device": "dispositivo de campo", "signal": "24VDC / 4-20mA / etc." }
+  ],
+  "devices": ["lista de dispositivos identificados (motores, sensores, válvulas, etc.)"],
+  "notes": ["observaciones, ambigüedades o elementos no legibles del diagrama"]
+}
+
+REGLAS:
+- type: DI=entrada digital, DO=salida digital, AI=entrada analógica, AO=salida analógica.
+- Usa nomenclatura IEC para los tags (xBoton, xMotor, rNivel, etc.).
+- Si algo no es legible o no aparece, indícalo en "notes" y no lo inventes.
+- Responde SOLO con el JSON, sin texto adicional ni markdown.`;
+}
+
+/** Construye el prompt para generar diagrama de conexión + BOM del tablero */
+export function buildWiringPrompt(args: {
+  description: string;
+  plcBrand: string;
+  language: string;
+  code?: string;
+}): string {
+  const brand = PLC_BRANDS[args.plcBrand as PLCBrandKey];
+
+  return `Eres un ingeniero de diseño de tableros eléctricos industriales. A partir del proceso descrito${args.code ? ' y del código PLC' : ''}, define el cableado de conexión del PLC y la lista de materiales del tablero.
+
+EQUIPO PLC: ${brand?.label || args.plcBrand}${brand ? ` — ${brand.software}` : ''}
+
+Devuelve EXCLUSIVAMENTE un objeto JSON válido con esta estructura exacta:
+{
+  "plc": "modelo del PLC",
+  "powerSupply": "fuente de alimentación recomendada (p.ej. 24VDC 5A)",
+  "connections": [
+    { "terminal": "%I0.0", "type": "DI|DO|AI|AO", "tag": "xBoton", "device": "Pulsador de marcha", "wire": "calibre/color sugerido" }
+  ],
+  "bom": [
+    { "item": "Componente", "reference": "referencia/parte sugerida", "quantity": 1, "notes": "opcional" }
+  ],
+  "notes": ["advertencias de diseño, protecciones, dimensionamiento"]
+}
+
+REGLAS:
+- Asigna direcciones de terminal coherentes con ${brand?.manufacturer || 'el fabricante'} (%I, %Q, %IW, %QW para Siemens; etiquetas equivalentes para otros).
+- En la BOM incluye al menos: PLC, fuente, protecciones (breakers/fusibles), borneras, y los contactores/relés/sensores necesarios según el proceso.
+- Sé realista en cantidades. Responde SOLO con el JSON, sin texto adicional ni markdown.
+
+PROCESO:
+${args.description}
+${args.code ? `\nCÓDIGO PLC:\n\`\`\`\n${args.code.slice(0, 6000)}\n\`\`\`` : ''}`;
+}
+
 /** Construye el prompt para analizar código PLC existente */
 export function buildAnalyzePrompt(code: string): string {
   return `Eres un ingeniero auditor de control e instrumentación y experto en seguridad de código PLC. 

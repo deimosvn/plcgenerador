@@ -1,27 +1,23 @@
 // ─────────────────────────────────────────────────────────────
-// API Route: POST /api/generate
-// Genera código PLC en el servidor. La clave de Gemini vive solo
-// aquí (variable de entorno) y nunca se expone al navegador.
+// API Route: POST /api/refine
+// Refina código PLC existente según una instrucción del usuario.
 // ─────────────────────────────────────────────────────────────
 
 import { NextRequest, NextResponse } from 'next/server';
-import { generateCode, hasServerApiKey, GeminiError } from '@/lib/gemini-server';
-import { buildFallbackCode } from '@/lib/prompts';
+import { refineCode, hasServerApiKey, GeminiError } from '@/lib/gemini-server';
 import { calculateCodeStats, generateId } from '@/lib/utils';
-import { validateGenerationInput } from '@/lib/validation';
+import { validateRefineInput } from '@/lib/validation';
 import { rateLimit, getClientId } from '@/lib/rate-limit';
 import type { GenerationResult } from '@/types';
 
 export const runtime = 'nodejs';
 
-// 20 generaciones por minuto y por IP.
 const RATE_LIMIT = 20;
 const RATE_WINDOW_MS = 60_000;
 
 export async function POST(request: NextRequest) {
-  // ─── Rate limiting ───
   const clientId = getClientId(request);
-  const rl = rateLimit(`generate:${clientId}`, RATE_LIMIT, RATE_WINDOW_MS);
+  const rl = rateLimit(`refine:${clientId}`, RATE_LIMIT, RATE_WINDOW_MS);
   if (!rl.allowed) {
     return NextResponse.json(
       { error: 'Demasiadas solicitudes. Espera un momento e intenta de nuevo.' },
@@ -29,7 +25,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ─── Parseo + validación ───
   let body: unknown;
   try {
     body = await request.json();
@@ -37,51 +32,38 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'JSON inválido.' }, { status: 400 });
   }
 
-  const validation = validateGenerationInput(body);
+  const validation = validateRefineInput(body);
   if (!validation.ok || !validation.data) {
     return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
-  const formData = validation.data;
-  const timestamp = Date.now();
-
-  // ─── Modo offline: sin clave en el servidor devolvemos demo ───
   if (!hasServerApiKey()) {
-    const code = buildFallbackCode(formData);
-    const result: GenerationResult = {
-      id: generateId(),
-      code,
-      description: formData.description,
-      plcBrand: formData.plcBrand,
-      plcModel: formData.plcModel,
-      language: formData.language,
-      timestamp,
-      codeStats: calculateCodeStats(code),
-      warning:
-        'Código de demostración generado localmente. Configura GEMINI_API_KEY en el servidor para habilitar la generación con IA.',
-    };
-    return NextResponse.json(result);
+    return NextResponse.json(
+      { error: 'El refinamiento con IA no está disponible: el servidor no tiene una clave configurada.' },
+      { status: 503 },
+    );
   }
 
-  // ─── Generación con IA ───
+  const { code, instruction, plcBrand, language } = validation.data;
+
   try {
-    const code = await generateCode(formData);
+    const newCode = await refineCode({ code, instruction, plcBrand, language });
     const result: GenerationResult = {
       id: generateId(),
-      code,
-      description: formData.description,
-      plcBrand: formData.plcBrand,
-      plcModel: formData.plcModel,
-      language: formData.language,
-      timestamp,
-      codeStats: calculateCodeStats(code),
+      code: newCode,
+      description: instruction,
+      plcBrand,
+      plcModel: '',
+      language,
+      timestamp: Date.now(),
+      codeStats: calculateCodeStats(newCode),
     };
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof GeminiError) {
       return NextResponse.json({ error: err.message }, { status: err.status });
     }
-    console.error('Generate route error:', err);
+    console.error('Refine route error:', err);
     return NextResponse.json({ error: 'Error interno del servidor.' }, { status: 500 });
   }
 }

@@ -7,11 +7,14 @@ import type { GenerationFormData, PLCBrandKey, PLCLanguage, SafetyLevel } from '
 
 interface GeneratorFormProps {
   onGenerate: (data: GenerationFormData) => void;
+  onCancel?: () => void;
   loading: boolean;
+  /** Texto inicial (p.ej. precargado desde un diagrama). */
+  initialDescription?: string;
 }
 
-export function GeneratorForm({ onGenerate, loading }: GeneratorFormProps) {
-  const [description, setDescription] = useState('');
+export function GeneratorForm({ onGenerate, onCancel, loading, initialDescription = '' }: GeneratorFormProps) {
+  const [description, setDescription] = useState(initialDescription);
   const [plcBrand, setPlcBrand] = useState<string>('siemens-s7-1200');
   const [plcModel, setPlcModel] = useState('');
   const [language, setLanguage] = useState<PLCLanguage>('st');
@@ -280,6 +283,16 @@ export function GeneratorForm({ onGenerate, loading }: GeneratorFormProps) {
           </>
         )}
       </button>
+
+      {loading && onCancel && (
+        <button
+          type="button"
+          onClick={onCancel}
+          className="w-full -mt-2 px-6 py-2.5 text-sm font-medium text-slate-500 hover:text-red-600 transition-colors"
+        >
+          Cancelar generación
+        </button>
+      )}
     </form>
   );
 }

@@ -9,12 +9,15 @@ import { useState, useEffect, useCallback } from 'react';
 export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T | ((prev: T) => T)) => void, () => void] {
   const [storedValue, setStoredValue] = useState<T>(initialValue);
 
-  // Cargar valor inicial desde localStorage
+  // Cargar valor inicial desde localStorage. Debe ocurrir tras el montaje
+  // (no en render) para evitar discrepancias de hidratación entre servidor
+  // y cliente: el servidor no tiene acceso a localStorage.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const item = window.localStorage.getItem(key);
       if (item) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hidratación intencional desde localStorage tras el montaje
         setStoredValue(JSON.parse(item));
       }
     } catch (error) {

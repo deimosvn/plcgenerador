@@ -17,7 +17,10 @@ export function HistoryPanel({ history, activeId, onLoad, onDelete, onClear }: H
   const [mounted, setMounted] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
 
+  // Guard de montaje: el historial vive en localStorage, así que no se
+  // renderiza en el servidor para evitar discrepancias de hidratación.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- guard de montaje intencional para contenido solo-cliente
     setMounted(true);
   }, []);
 
