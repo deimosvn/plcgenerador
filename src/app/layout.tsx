@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'PLC AI Studio — Generador de Código PLC con IA',
+  title: 'PLC AI Studio - Generador de Código PLC con IA',
   description:
     'Genera código PLC profesional en segundos con inteligencia artificial. Soporte para Siemens, Allen-Bradley, Mitsubishi, Omron, Schneider, Beckhoff, ABB y más. Compatible con IEC 61131-3.',
   keywords: [
