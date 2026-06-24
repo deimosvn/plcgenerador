@@ -121,12 +121,12 @@ const SECURITY_POINTS = [
 ];
 
 // Reutilizable Framer Motion variant para scroll reveals
-const fadeInUp = {
+const fadeInUp: any = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } },
 };
 
-const staggerContainer = {
+const staggerContainer: any = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -210,7 +210,7 @@ export function LandingPage() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
             className="inline-flex items-center gap-3 px-5 py-2 rounded-full bg-white/[0.05] border border-white/[0.1] text-[10px] font-medium tracking-[0.3em] text-white uppercase mb-8 backdrop-blur-xl"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse shadow-[0_0_10px_rgba(59,130,246,1)]"></span>
@@ -220,7 +220,7 @@ export function LandingPage() {
           <motion.h1 
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.2, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1.2, delay: 0.2, ease: "easeOut" }}
             className="text-[80px] md:text-[140px] lg:text-[180px] font-medium tracking-tight text-white relative leading-[0.85]"
           >
             LOGIC
@@ -229,7 +229,7 @@ export function LandingPage() {
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, delay: 0.4, ease: "easeOut" }}
             className="text-base md:text-xl text-slate-300 max-w-2xl mt-10 leading-relaxed font-light"
           >
             Genera, audita y optimiza código PLC en segundos con IA. 
@@ -239,7 +239,7 @@ export function LandingPage() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 1, delay: 0.6, ease: "easeOut" }}
             className="mt-14 flex items-center gap-6"
           >
             <Link href="/studio" className="group relative inline-flex items-center justify-center gap-4 px-10 py-5 bg-white text-black text-[12px] font-semibold tracking-[0.2em] uppercase rounded-full overflow-hidden transition-all hover:scale-105 hover:shadow-[0_0_50px_rgba(255,255,255,0.4)]">
