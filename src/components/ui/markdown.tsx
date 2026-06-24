@@ -31,10 +31,10 @@ function renderInline(text: string, keyPrefix: string): React.ReactNode[] {
     const key = `${keyPrefix}-${i++}`;
 
     if (token.startsWith('**')) {
-      tokens.push(<strong key={key} className="font-semibold text-slate-900">{token.slice(2, -2)}</strong>);
+      tokens.push(<strong key={key} className="font-semibold text-white">{token.slice(2, -2)}</strong>);
     } else if (token.startsWith('`')) {
       tokens.push(
-        <code key={key} className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-rose-600">
+        <code key={key} className="rounded bg-white/[0.06] px-1.5 py-0.5 font-mono text-[0.85em] text-rose-300">
           {token.slice(1, -1)}
         </code>,
       );
@@ -64,9 +64,9 @@ export function Markdown({ content, className = '' }: MarkdownProps) {
     ));
     blocks.push(
       listOrdered ? (
-        <ol key={`block-${key++}`} className="my-3 list-decimal space-y-1.5 pl-6 text-slate-700">{items}</ol>
+        <ol key={`block-${key++}`} className="my-3 list-decimal space-y-1.5 pl-6 text-zinc-300">{items}</ol>
       ) : (
-        <ul key={`block-${key++}`} className="my-3 list-disc space-y-1.5 pl-6 text-slate-700">{items}</ul>
+        <ul key={`block-${key++}`} className="my-3 list-disc space-y-1.5 pl-6 text-zinc-300">{items}</ul>
       ),
     );
     listItems = [];
@@ -110,7 +110,7 @@ export function Markdown({ content, className = '' }: MarkdownProps) {
       blocks.push(
         <p
           key={`block-${key++}`}
-          className={`mt-5 mb-2 font-bold text-slate-900 ${sizes[level - 1]}`}
+          className={`mt-5 mb-2 font-bold text-white ${sizes[level - 1]}`}
         >
           {renderInline(text, `h-${key}`)}
         </p>,
@@ -137,7 +137,7 @@ export function Markdown({ content, className = '' }: MarkdownProps) {
     // Párrafo
     flushList();
     blocks.push(
-      <p key={`block-${key++}`} className="my-2 leading-relaxed text-slate-700">
+      <p key={`block-${key++}`} className="my-2 leading-relaxed text-zinc-300">
         {renderInline(trimmed, `p-${key}`)}
       </p>,
     );

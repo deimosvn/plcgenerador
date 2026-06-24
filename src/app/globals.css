@@ -13,32 +13,34 @@ html {
 }
 
 body {
-  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f0f9ff 100%);
+  background: #0a0a0b;
   min-height: 100vh;
-  color: #1e293b;
+  color: #d4d4d8; /* zinc-300 */
 }
 
 /* ─── Selection ─── */
 ::selection {
-  background-color: #3b82f6;
+  background-color: #2563eb;
   color: #ffffff;
 }
 
-/* ─── Scrollbar ─── */
+/* ─── Scrollbar (dark) ─── */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 9px;
+  height: 9px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(255, 255, 255, 0.22);
 }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ─── Code blocks inside preview ─── */
 pre code {
@@ -64,13 +66,33 @@ pre code {
   animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Superficie de panel (tema oscuro, compartido con la landing) */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.02);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
+
+/* ─── Campos de formulario (tema oscuro) ─── */
+.field {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  color: #f4f4f5;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.field::placeholder { color: #71717a; }
+.field:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+.field:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Opciones de select legibles en su menú nativo */
+.field option { background: #18181b; color: #f4f4f5; }
 
 .hover-lift {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
