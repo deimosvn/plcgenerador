@@ -206,10 +206,10 @@ export function LandingPage() {
             muted
             playsInline
             preload="auto"
-            poster="/hero-robot.png"
+            poster="/hero-poster.jpg"
             className="w-full h-full object-cover opacity-80"
           >
-            <source src="/robot_optimized.mp4" type="video/mp4" />
+            <source src="/hero-bg.mp4" type="video/mp4" />
           </video>
           {/* Vignette & Gradients to ensure text readability */}
           <div className="absolute inset-0 bg-black/40 z-10" />
